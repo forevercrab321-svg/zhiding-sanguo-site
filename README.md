@@ -28,9 +28,9 @@ Google Play and the in-game About sheet link to. Plain static HTML, no build ste
   Privacy answers and the Google Play Data safety form before releasing that version.
 - Never copy internal design or research documents from the game repository into this public repository.
 
-## Web build (`play/`)
+## Automatic deploy (web build + these pages)
 
-`play/` is the Godot Web export of the game (`ONLY=web tools/export_builds.sh` in the game repository, copied from
-`builds/web/` without the local launcher scripts), plus Open Graph tags added to `play/index.html` and `share.jpg`
-for link previews. Single-threaded build, so it needs no special headers and runs on GitHub Pages. To update: rebuild,
-copy `builds/web/index.*` and `builds/web/maps/` over `play/`, re-add the Open Graph block, push.
+Pages serve the **`gh-pages`** branch, which `.github/workflows/web.yml` in the game repository rebuilds on every push
+to its `main`: these pages from `docs/release/site/` plus the Godot Web export under `play/`
+(`tools/release/web_site.py`). Edit the pages in the game repository, never on `gh-pages` (each deploy replaces it).
+The `main` branch of the site repo is only a fallback copy.
