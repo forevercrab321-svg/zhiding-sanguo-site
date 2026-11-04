@@ -293,7 +293,7 @@ html, body {
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":58865280,"index.wasm":38057390},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js"};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":58868336,"index.wasm":38057390},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js"};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
@@ -325,7 +325,7 @@ const engine = new Engine(GODOT_CONFIG);
 		'Tip: send a general to duel and pay less tribute',
 		'Tip: bring two or more generals to lay siege',
 		'Tip: Swift Steed lets you roll two dice three times',
-		'Tip: when someone goes bankrupt, the richest wins',
+		'Tip: go bankrupt and you are out; last lord standing wins',
 	] : [
 		'小贴士：停在空城，付钱就能占下',
 		'小贴士：路过自己的城，领一笔俸禄',
@@ -333,7 +333,7 @@ const engine = new Engine(GODOT_CONFIG);
 		'小贴士：派武将斗将，赢了少付纳贡',
 		'小贴士：带两名以上武将，就能攻城战',
 		'小贴士：千里马让你三次掷两颗骰子',
-		'小贴士：有人破产就比资产，钱多的赢',
+		'小贴士：破产就出局，最后没破产的人赢',
 	];
 	let tipIndex = Math.floor(Math.random() * TIPS.length);
 	function nextTip() {
