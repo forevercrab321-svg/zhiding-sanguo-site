@@ -8,6 +8,7 @@ Google Play and the in-game About sheet link to. Plain static HTML, no build ste
 | Landing | https://forevercrab321-svg.github.io/zhiding-sanguo-site/ |
 | Privacy policy | https://forevercrab321-svg.github.io/zhiding-sanguo-site/privacy.html |
 | Support | https://forevercrab321-svg.github.io/zhiding-sanguo-site/support.html |
+| Play in the browser | https://forevercrab321-svg.github.io/zhiding-sanguo-site/play/ |
 
 ## Publish (owner, once)
 
@@ -26,3 +27,10 @@ Google Play and the in-game About sheet link to. Plain static HTML, no build ste
 - If what the game does with data changes, update `privacy.html` (and its effective date) **and** the App Store App
   Privacy answers and the Google Play Data safety form before releasing that version.
 - Never copy internal design or research documents from the game repository into this public repository.
+
+## Web build (`play/`)
+
+`play/` is the Godot Web export of the game (`ONLY=web tools/export_builds.sh` in the game repository, copied from
+`builds/web/` without the local launcher scripts), plus Open Graph tags added to `play/index.html` and `share.jpg`
+for link previews. Single-threaded build, so it needs no special headers and runs on GitHub Pages. To update: rebuild,
+copy `builds/web/index.*` and `builds/web/maps/` over `play/`, re-add the Open Graph block, push.
