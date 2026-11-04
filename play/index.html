@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="utf-8">
+		<!-- viewport-fit=cover: the page reaches under a phone's notch and home bar; the game moves its HUD in by
+		     env(safe-area-inset-*) (audit round 2 UX-04, UiScale.safe_insets). -->
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, viewport-fit=cover">
+		<meta name="theme-color" content="#8fd3ff">
+		<meta name="description" content="掷鼎三国：掷骰子、占城池、斗武将的三国棋盘游戏。">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+		<meta name="apple-mobile-web-app-title" content="掷鼎三国">
+		<title>掷鼎三国</title>
+		<meta property="og:type" content="website">
+		<meta property="og:title" content="Three Kingdoms Dice · 掷鼎三国 — play free in your browser">
+		<meta property="og:description" content="Roll dice, claim cities and duel generals across a Three Kingdoms board. Free, no download, no sign-up.">
+		<meta property="og:url" content="https://forevercrab321-svg.github.io/zhiding-sanguo-site/play/">
+		<meta property="og:image" content="https://forevercrab321-svg.github.io/zhiding-sanguo-site/share.jpg">
+		<meta property="og:image:width" content="1200">
+		<meta property="og:image:height" content="630">
+		<meta name="twitter:card" content="summary_large_image">
+		<meta name="twitter:title" content="Three Kingdoms Dice · 掷鼎三国">
+		<meta name="twitter:description" content="Roll dice, claim cities and duel generals. Free in your browser.">
+		<meta name="twitter:image" content="https://forevercrab321-svg.github.io/zhiding-sanguo-site/share.jpg">
+		<!-- 掷鼎三国 web shell (audit round 2, independent UX-06): the branded loader replaces Godot's grey bar.
+		     A Godot 4.5 HTML template: $GODOT_* placeholders are filled in by the export. -->
+		<style>
+:root {
+	--ink: #4a2e1c;
+	--red: #ef5340;
+	--red-deep: #c0362b;
+	--gold: #ffc23d;
+	--gold-deep: #f0a020;
+	--gold-light: #fff1a8;
+	--paper: #fffaf0;
+	--sky: #8fd3ff;
+	--sky-top: #6ec3ff;
+	--grass: #9ee07a;
+}
+
+html, body, #canvas {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+html, body {
+	background: var(--sky);
+	color: var(--ink);
+	font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", sans-serif;
+	overflow: hidden;
+	touch-action: none;
+	height: 100%;
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+#canvas {
+	display: block;
+	background: var(--sky);
+}
+
+#canvas:focus {
+	outline: none;
+}
+
+#status {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	visibility: hidden;
+	background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky) 45%, #c8ecff 75%, var(--grass) 100%);
+	overflow: hidden;
+	z-index: 1;
+}
+
+/* soft sun rays behind the picture */
+#status::before {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: 30%;
+	width: 240vmax;
+	height: 240vmax;
+	margin: -120vmax 0 0 -120vmax;
+	background: repeating-conic-gradient(rgba(255, 242, 178, 0.28) 0deg 8deg, rgba(255, 242, 178, 0) 8deg 20deg);
+	animation: spin 90s linear infinite;
+	pointer-events: none;
+}
+
+@keyframes spin {
+	to { transform: rotate(360deg); }
+}
+
+#status-splash {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	object-position: center 40%;
+}
+
+#status-splash.show-image--false {
+	visibility: hidden;
+}
+
+#status-splash.use-filter--false {
+	image-rendering: pixelated;
+}
+
+#loader {
+	position: absolute;
+	left: 50%;
+	bottom: max(5%, calc(env(safe-area-inset-bottom) + 16px));
+	transform: translateX(-50%);
+	width: min(640px, 84vw);
+	display: none;
+	flex-direction: column;
+	align-items: center;
+	gap: 10px;
+}
+
+#bar {
+	position: relative;
+	width: 100%;
+	height: 30px;
+	border: 5px solid var(--ink);
+	border-radius: 20px;
+	background: var(--paper);
+	box-shadow: 0 6px 0 var(--ink);
+	overflow: hidden;
+}
+
+#bar-fill {
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 4%;
+	border-radius: 14px;
+	background: linear-gradient(180deg, #fff1a8 0%, var(--gold) 45%, var(--gold-deep) 100%);
+	transition: width 0.25s ease-out;
+}
+
+#bar-fill::after {
+	content: "";
+	position: absolute;
+	left: 8px;
+	right: 8px;
+	top: 4px;
+	height: 6px;
+	border-radius: 3px;
+	background: rgba(255, 255, 255, 0.6);
+}
+
+#bar.busy #bar-fill {
+	width: 100% !important;
+	background: repeating-linear-gradient(-45deg, var(--gold) 0 18px, #ffd76a 18px 36px);
+	background-size: 51px 100%;
+	animation: stripes 0.8s linear infinite;
+}
+
+@keyframes stripes {
+	to { background-position: 51px 0; }
+}
+
+#die {
+	position: absolute;
+	top: -10px;
+	width: 42px;
+	height: 42px;
+	margin-left: -21px;
+	left: 4%;
+	border: 4px solid var(--ink);
+	border-radius: 11px;
+	background: var(--paper);
+	box-shadow: 0 4px 0 var(--ink);
+	box-sizing: border-box;
+	animation: roll 0.9s ease-in-out infinite;
+	transition: left 0.25s ease-out;
+	z-index: 2;
+}
+
+#die::before {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 10px;
+	height: 10px;
+	margin: -5px 0 0 -5px;
+	border-radius: 50%;
+	background: var(--red);
+	box-shadow: -10px -10px 0 -1px var(--ink), 10px 10px 0 -1px var(--ink), 10px -10px 0 -1px var(--ink), -10px 10px 0 -1px var(--ink);
+}
+
+@keyframes roll {
+	0%, 100% { transform: translateY(0) rotate(-8deg); }
+	50% { transform: translateY(-8px) rotate(8deg); }
+}
+
+#bar-wrap {
+	position: relative;
+	width: 100%;
+}
+
+#status-text {
+	font-size: 18px;
+	font-weight: 700;
+	color: var(--ink);
+	background: rgba(255, 250, 240, 0.92);
+	border: 3px solid var(--ink);
+	border-radius: 16px;
+	padding: 2px 14px;
+}
+
+#tip {
+	font-size: 17px;
+	font-weight: 700;
+	color: var(--paper);
+	text-shadow: 0 2px 0 var(--ink), 2px 0 0 var(--ink), -2px 0 0 var(--ink), 0 -2px 0 var(--ink);
+	text-align: center;
+	min-height: 1.4em;
+	transition: opacity 0.35s;
+}
+
+#status-notice {
+	display: none;
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	width: min(560px, 86vw);
+	box-sizing: border-box;
+	background: var(--paper);
+	border: 5px solid var(--ink);
+	border-radius: 22px;
+	box-shadow: 0 8px 0 var(--ink);
+	color: var(--ink);
+	font-size: 17px;
+	line-height: 1.5;
+	padding: 18px 22px;
+	text-align: center;
+	z-index: 3;
+}
+
+#status-notice b {
+	display: block;
+	color: var(--red-deep);
+	font-size: 22px;
+	margin-bottom: 6px;
+}
+
+@media (max-height: 430px) {
+	#bar { height: 22px; border-width: 4px; }
+	#die { width: 34px; height: 34px; margin-left: -17px; top: -9px; }
+	#die::before { width: 8px; height: 8px; margin: -4px 0 0 -4px; box-shadow: -8px -8px 0 -1px var(--ink), 8px 8px 0 -1px var(--ink), 8px -8px 0 -1px var(--ink), -8px 8px 0 -1px var(--ink); }
+	#status-text { font-size: 14px; }
+	#tip { font-size: 14px; }
+	#loader { gap: 6px; }
+}
+		</style>
+		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
+<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+<link rel="manifest" href="index.manifest.json">
+
+	</head>
+	<body>
+		<canvas id="canvas">
+			你的浏览器不支持 canvas。 Your browser does not support canvas.
+		</canvas>
+
+		<noscript>
+			掷鼎三国需要打开 JavaScript 才能玩。 Please turn on JavaScript to play.
+		</noscript>
+
+		<div id="status">
+			<img id="status-splash" class="show-image--true fullsize--true use-filter--true" src="index.png" alt="掷鼎三国">
+			<div id="loader">
+				<div id="bar-wrap">
+					<div id="die"></div>
+					<div id="bar"><div id="bar-fill"></div></div>
+				</div>
+				<div id="status-text">正在准备……</div>
+				<div id="tip"></div>
+			</div>
+			<div id="status-notice"></div>
+		</div>
+
+		<script src="index.js"></script>
+		<script>
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":58865168,"index.wasm":38057390},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js"};
+const GODOT_THREADS_ENABLED = false;
+const engine = new Engine(GODOT_CONFIG);
+
+(function () {
+	const statusOverlay = document.getElementById('status');
+	const loader = document.getElementById('loader');
+	const bar = document.getElementById('bar');
+	const barFill = document.getElementById('bar-fill');
+	const die = document.getElementById('die');
+	const statusText = document.getElementById('status-text');
+	const tipEl = document.getElementById('tip');
+	const statusNotice = document.getElementById('status-notice');
+
+	// English first (App Store / US launch, owner 2026-10-28): the loader follows the browser language like the game's
+	// first launch (Loc.default_language): Chinese browsers get Chinese, everything else English
+	const EN = !/^zh/i.test(navigator.language || '');
+	const L = (zh, en) => (EN ? en : zh);
+	if (EN) {
+		document.documentElement.lang = 'en';
+		document.title = 'Three Kingdoms Dice';
+		statusText.textContent = 'Getting ready...';
+	}
+
+	// short how-to-play tips while the game downloads (the rules sheet in a few words)
+	const TIPS = EN ? [
+		'Tip: stop on an empty city and pay to claim it',
+		'Tip: pass your own city to collect a salary',
+		'Tip: own a whole region and tribute doubles!',
+		'Tip: send a general to duel and pay less tribute',
+		'Tip: bring two or more generals to lay siege',
+		'Tip: Swift Steed lets you roll two dice three times',
+		'Tip: when someone goes bankrupt, the richest wins',
+	] : [
+		'小贴士：停在空城，付钱就能占下',
+		'小贴士：路过自己的城，领一笔俸禄',
+		'小贴士：一个地区全占下，纳贡翻倍！',
+		'小贴士：派武将斗将，赢了少付纳贡',
+		'小贴士：带两名以上武将，就能攻城战',
+		'小贴士：千里马让你三次掷两颗骰子',
+		'小贴士：有人破产就比资产，钱多的赢',
+	];
+	let tipIndex = Math.floor(Math.random() * TIPS.length);
+	function nextTip() {
+		tipEl.style.opacity = '0';
+		setTimeout(() => {
+			tipEl.textContent = TIPS[tipIndex % TIPS.length];
+			tipIndex += 1;
+			tipEl.style.opacity = '1';
+		}, 350);
+	}
+	tipEl.textContent = TIPS[tipIndex % TIPS.length];
+	tipIndex += 1;
+	const tipTimer = setInterval(nextTip, 4200);
+
+	let initializing = true;
+	let statusMode = '';
+
+	function setStatusMode(mode) {
+		if (statusMode === mode || !initializing) {
+			return;
+		}
+		if (mode === 'hidden') {
+			clearInterval(tipTimer);
+			statusOverlay.remove();
+			initializing = false;
+			return;
+		}
+		statusOverlay.style.visibility = 'visible';
+		loader.style.display = mode === 'progress' ? 'flex' : 'none';
+		statusNotice.style.display = mode === 'notice' ? 'block' : 'none';
+		statusMode = mode;
+	}
+
+	function mb(bytes) {
+		return (bytes / 1048576).toFixed(bytes < 10485760 ? 1 : 0);
+	}
+
+	function setProgress(current, total) {
+		if (current > 0 && total > 0) {
+			const k = Math.min(1, current / total);
+			bar.classList.remove('busy');
+			barFill.style.width = Math.max(4, k * 100) + '%';
+			die.style.left = Math.max(4, k * 100) + '%';
+			if (k >= 1) {
+				// downloaded: the engine starts and the board is laid out (can take a while on a phone)
+				bar.classList.add('busy');
+				statusText.textContent = L('下载好啦，正在摆棋盘……', 'Downloaded! Setting up the board...');
+			} else {
+				statusText.textContent = L('正在搬运城池和武将… ', 'Bringing in cities and generals... ') + mb(current) + ' / ' + mb(total) + ' MB';
+			}
+		} else {
+			bar.classList.add('busy');
+			statusText.textContent = L('正在准备……', 'Getting ready...');
+		}
+	}
+
+	function setStatusNotice(title, text) {
+		while (statusNotice.lastChild) {
+			statusNotice.removeChild(statusNotice.lastChild);
+		}
+		const b = document.createElement('b');
+		b.textContent = title;
+		statusNotice.appendChild(b);
+		text.split('\n').forEach((line) => {
+			statusNotice.appendChild(document.createTextNode(line));
+			statusNotice.appendChild(document.createElement('br'));
+		});
+	}
+
+	function displayFailureNotice(err) {
+		console.error(err);
+		let msg = L('出了点意外，刷新一下再试试。', 'Something went wrong. Please refresh and try again.');
+		if (err instanceof Error) {
+			msg += '\n(' + err.message + ')';
+		} else if (typeof err === 'string') {
+			msg += '\n(' + err + ')';
+		}
+		setStatusNotice(L('哎呀，没能开局', 'Oops, the game could not start'), msg);
+		setStatusMode('notice');
+		initializing = false;
+	}
+
+	const missing = Engine.getMissingFeatures({
+		threads: GODOT_THREADS_ENABLED,
+	});
+
+	if (missing.length !== 0) {
+		if (GODOT_CONFIG['serviceWorker'] && GODOT_CONFIG['ensureCrossOriginIsolationHeaders'] && 'serviceWorker' in navigator) {
+			let serviceWorkerRegistrationPromise;
+			try {
+				serviceWorkerRegistrationPromise = navigator.serviceWorker.getRegistration();
+			} catch (err) {
+				serviceWorkerRegistrationPromise = Promise.reject(new Error('Service worker registration failed.'));
+			}
+			// There's a chance that installing the service worker would fix the issue
+			Promise.race([
+				serviceWorkerRegistrationPromise.then((registration) => {
+					if (registration != null) {
+						return Promise.reject(new Error('Service worker already exists.'));
+					}
+					return registration;
+				}).then(() => engine.installServiceWorker()),
+				// For some reason, `getRegistration()` can stall
+				new Promise((resolve) => {
+					setTimeout(() => resolve(), 2000);
+				}),
+			]).then(() => {
+				// Reload if there was no error.
+				window.location.reload();
+			}).catch((err) => {
+				console.error('Error while registering service worker:', err);
+			});
+		} else {
+			setStatusNotice(L('这个浏览器玩不了', 'This browser can\'t run the game'), L('请换用新版的 Chrome、Edge、Safari 或 Firefox。\n缺少：', 'Please use a recent Chrome, Edge, Safari or Firefox.\nMissing: ') + missing.join(L('、', ', ')));
+			setStatusMode('notice');
+			initializing = false;
+		}
+	} else {
+		setStatusMode('progress');
+		setProgress(0, 0);
+		engine.startGame({
+			'onProgress': setProgress,
+		}).then(() => {
+			setStatusMode('hidden');
+		}, displayFailureNotice);
+	}
+}());
+		</script>
+	</body>
+</html>
+
