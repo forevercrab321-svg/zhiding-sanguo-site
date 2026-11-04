@@ -16,7 +16,7 @@ Google Play and the in-game About sheet link to. Plain static HTML, no build ste
    (Add file → Upload files → Commit).
 3. Settings → Pages → Build and deployment → Source: *Deploy from a branch*, Branch: `main`, folder `/ (root)` → Save.
 4. Wait 1–2 minutes, then open the three URLs above **on a phone on mobile data** and check each one loads.
-5. Send a test email to support@xcity.ai and check it arrives (the pages and the game point people there).
+5. Send a test email to forevercrab321@gmail.com and check it arrives (the pages and the game point people there).
 
 ## Keep in step
 
